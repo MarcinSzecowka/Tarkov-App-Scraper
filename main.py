@@ -140,18 +140,28 @@ def parsing_items_function(downloaded_html):
                 icon_element = table.find("td", {"class": "va-infobox-icon"})
                 icon_link = icon_element.find("a", href=True)["href"]
                 item_dict["image"] = icon_link
-        # database.insert_one(item_dict)
         if item_dict:
-            items_dicts_list.append(item_dict)
+            return item_dict
+        else:
+            return None
     except AttributeError:
-        fails.append(soup.find("h1", {"class": "page-header__title"}).getText())
+        item_dict = soup.find("h1", {"class": "page-header__title"}).getText()
+        return item_dict
 
 
 def get_all_items_responses(links_set):
+    item_dicts = []
+    fails = []
     with ThreadPoolExecutor(max_workers=2 * os.cpu_count() + 1) as pool:
         res = pool.map(requests.get, links_set)
     for result in res:
-        parsing_items_function(result)
+        item = parsing_items_function(result)
+        if item:
+            if isinstance(item, dict):
+                item_dicts.append(item)
+            else:
+                fails.append(item)
+    return item_dicts, fails
 
 
 if __name__ == '__main__':
@@ -160,26 +170,26 @@ if __name__ == '__main__':
     parsing_results = get_all_remaining_links()
     rogue_links = get_rogue_links()
     parsing_results.extend(rogue_links)
-    parsing_results = [WIKI_LINK + ele for ele in parsing_results if ele is not None]  # removing None types
-    # removing
+
+    # removing None types
+    parsing_results = [WIKI_LINK + ele for ele in parsing_results if ele is not None]
+
+    # removing duplicates
     parsing_results = set(parsing_results)
 
-    # creating database
-    # database = database_declaration()
-
     # scraping item info from links
-    fails = []
-    items_dicts_list = []
-    get_all_items_responses(parsing_results)
-    for x in items_dicts_list:
-        print(x)
-    for y in fails:
+    items_dicts_list, fails_list = get_all_items_responses(parsing_results)
+
+    # checking all fails
+    for y in fails_list:
         print(f"Failed in: {y}")
+
+    # checking the number of items and fails
     print(f"Item count: {len(items_dicts_list)}")
-    print(f"Fail count: {len(fails)}")
-    # inserting a record
-    # example_dict = {
-    #     "id": 0,
-    #     "type": "weapon-attachment"
-    # }
-    # x = database.insert_one(example_dict)
+    print(f"Fail count: {len(fails_list)}")
+
+    # creating database
+    database = database_declaration()
+
+    # inserting all scraped items into the "Items" collection
+    print(database.insert_many(items_dicts_list).inserted_ids)
