@@ -132,14 +132,45 @@ def parsing_items_function(downloaded_html):
             except IndexError:
                 pass
             # title
-            if table.find("div", {"class": "va-infobox-title-main"}):
-                title = table.find("div", {"class": "va-infobox-title-main"}).getText()
-                item_dict["name"] = title
+            title = table.find("div", {"class": "va-infobox-title-main"})
+            if title:
+                item_dict["name"] = title.getText()
+            # image
+            picture = table.find("td", {"class": "va-infobox-mainimage-image"})
+            if picture:
+                item_dict["picture"] = picture.find("a", href=True)["href"]
             # icon
-            if table.find("td", {"class": "va-infobox-icon"}):
-                icon_element = table.find("td", {"class": "va-infobox-icon"})
-                icon_link = icon_element.find("a", href=True)["href"]
-                item_dict["image"] = icon_link
+            icon = table.find("td", {"class": "va-infobox-icon"})
+            if icon:
+                item_dict["icon"] = icon.find("a", href=True)["href"]
+
+            # quests
+            all_h2_elements = soup.find_all("h2")
+            for h2 in all_h2_elements:
+                children = h2.find_all("span")
+                for child in children:
+                    if child.getText() == "Quests":
+                        item_dict["quests"] = []
+                        quest_dict = {}
+                        quests_element = h2.find_next_sibling()
+                        quests = quests_element.find_all("li")
+                        for quest in quests:
+                            quest_dict["trader"] = "Prapor"
+                            all_quest_hrefs = quest.find_all("a", href=True)
+                            if all_quest_hrefs[0]["href"] == "/wiki/Found_in_raid":
+                                quest_dict["name"] = all_quest_hrefs[1].getText()
+                                quest_dict["foundInRaidRequired"] = True
+                            else:
+                                quest_dict["name"] = all_quest_hrefs[0].getText()
+                                quest_dict["foundInRaidRequired"] = False
+                            try:
+                                # quest_dict["itemCount"] = int(quest.getText().split(" ", 0)[0])
+                                quest_dict["itemCount"] = int(quest.getText().split(" ", 1)[0])
+                            except ValueError:
+                                pass
+                            item_dict["quests"].append(quest_dict)
+                        else:
+                            break
         if item_dict:
             return item_dict
         else:
