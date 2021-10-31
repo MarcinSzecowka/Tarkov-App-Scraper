@@ -99,9 +99,9 @@ def database_declaration():
     my_db = my_client["Tarkov-app-db"]
 
     # delete collection if it already exists
-    if "Items" in my_db.list_collection_names():
-        my_col = my_db["Items"]
-        my_col.drop()
+    # if "Items" in my_db.list_collection_names():
+    #     my_col = my_db["Items"]
+    #     my_col.drop()
 
     # creating collection
     my_col = my_db["Items"]
@@ -132,6 +132,7 @@ def parsing_items_function(downloaded_html):
             except IndexError:
                 pass
             # title
+
             if table.find("div", {"class": "va-infobox-title-main"}):
                 title = table.find("div", {"class": "va-infobox-title-main"}).getText()
                 item_dict["name"] = title
@@ -149,22 +150,34 @@ def parsing_items_function(downloaded_html):
         return item_dict
 
 
-def get_all_items_responses(links_set):
-    item_dicts = []
+def try_get(url):
+    try:
+        return requests.get(url, timeout=10)
+    except Exception as e:
+        return e
+
+
+def get_all_items_responses(links_set, collection):
     fails = []
     with ThreadPoolExecutor(max_workers=2 * os.cpu_count() + 1) as pool:
-        res = pool.map(requests.get, links_set)
+        res = pool.map(try_get, links_set)
     for result in res:
-        item = parsing_items_function(result)
-        if item:
-            if isinstance(item, dict):
-                item_dicts.append(item)
-            else:
-                fails.append(item)
-    return item_dicts, fails
+        if isinstance(result, Exception):
+            fails.append(result)
+        else:
+            item = parsing_items_function(result)
+            if item:
+                if isinstance(item, dict):
+                    collection.insert_one(item)
+                else:
+                    fails.append(item)
+    return fails
 
 
 if __name__ == '__main__':
+    # creating database
+    items_collection = database_declaration()
+
     # getting all links
     elements_to_parse = get_all_items_links()
     parsing_results = get_all_remaining_links()
@@ -178,18 +191,11 @@ if __name__ == '__main__':
     parsing_results = set(parsing_results)
 
     # scraping item info from links
-    items_dicts_list, fails_list = get_all_items_responses(parsing_results)
+    fails_list = get_all_items_responses(list(parsing_results)[0:1000], items_collection)
 
     # checking all fails
     for y in fails_list:
         print(f"Failed in: {y}")
 
-    # checking the number of items and fails
-    print(f"Item count: {len(items_dicts_list)}")
+    # checking the number of fails
     print(f"Fail count: {len(fails_list)}")
-
-    # creating database
-    database = database_declaration()
-
-    # inserting all scraped items into the "Items" collection
-    print(database.insert_many(items_dicts_list).inserted_ids)
