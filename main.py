@@ -1,3 +1,5 @@
+import uuid
+
 from bs4 import BeautifulSoup
 import requests
 import os
@@ -262,8 +264,9 @@ def parse_crafting_recipe(row):
     products = parse_item_components(table_headers[4])
     hideout_module = parse_hideout_module(table_headers[2])
 
+    crafting_recipe["id"] = str(uuid.uuid4())
     crafting_recipe["components"] = components
-    crafting_recipe["products"] = products[0]
+    crafting_recipe["product"] = products[0]
     crafting_recipe["module"] = hideout_module["name"]
     crafting_recipe["level"] = hideout_module["level"]
     crafting_recipe["time"] = hideout_module["time"]
