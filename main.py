@@ -60,7 +60,7 @@ def get_all_items_links():
     for ele in parse_3_candidates:
         all_items_links.append((WIKI_LINK + ele, parse_3))
 
-    return all_items_links
+    return [(WIKI_LINK + "/wiki/Loot", parse_1)]
 
 
 def get_rogue_links():
@@ -187,6 +187,110 @@ def append_quests(item, soup):
                     break
 
 
+def is_crafting_table(table):
+    prev_sibling = table.find_previous_sibling()
+    header = prev_sibling.find("span", {"id": "Crafting"})
+    return header and header.getText() == "Crafting"
+
+
+def find_all_links_without_children(table_header):
+    links = table_header.find_all("a")
+    return list(filter(lambda link: not link.find("img"), links))
+
+
+def parse_component_count(item_component_name, full_text):
+    split = full_text.strip().split("+")
+    for word in split:
+        if item_component_name in word:
+            count_text = word.strip().removesuffix(item_component_name)
+            return count_text.removeprefix("x").strip()
+    return None
+
+
+def parse_component_image(table_header, link):
+    link_with_image = table_header.find("a", {"title": link.getText()})
+    if link_with_image:
+        image = link_with_image.find("img")
+        if image:
+            data_src = image.get("data-src")
+            src = image.get("src")
+            if data_src:
+                return data_src
+            elif src:
+                return src
+    return None
+
+
+def parse_item_component(table_header, link, full_text):
+    item_component = {}
+    item_component_name = link.getText()
+    item_component["name"] = item_component_name
+    item_component["count"] = parse_component_count(item_component_name, full_text)
+    item_component["image"] = parse_component_image(table_header, link)
+    return item_component
+
+
+def parse_item_components(table_header):
+    components = []
+    full_text = table_header.getText()
+    links = find_all_links_without_children(table_header)
+    for link in links:
+        component = parse_item_component(table_header, link, full_text)
+        components.append(component)
+    return components
+
+
+def parse_hideout_module(table_header):
+    hideout_module = {}
+    link = table_header.find("a")
+    if link:
+        text = link.getText().strip().split("level")
+        hideout_module["name"] = text[0].strip()
+        hideout_module["level"] = text[1].strip()
+    hideout_module["time"] = table_header.find("br").next.getText().strip()
+    return hideout_module
+
+
+def parse_crafting_recipe(row):
+    crafting_recipe = {}
+    table_headers = row.find_all("th")
+    if len(table_headers) != 5:
+        print(f"Unable to parse crafting recipe for row: {row.getText()}")
+        return None
+
+    components = parse_item_components(table_headers[0])
+    products = parse_item_components(table_headers[4])
+    hideout_module = parse_hideout_module(table_headers[2])
+
+    crafting_recipe["components"] = components
+    crafting_recipe["products"] = products[0]
+    crafting_recipe["module"] = hideout_module["name"]
+    crafting_recipe["level"] = hideout_module["level"]
+    crafting_recipe["time"] = hideout_module["time"]
+
+    return crafting_recipe
+
+
+def append_crafting_recipes(item, soup):
+    crafting_recipes = []
+
+    wikitables = soup.find_all("table", {"class": "wikitable"})
+    if wikitables:
+        for table in wikitables:
+            if is_crafting_table(table):
+                rows = table.find("tbody").find_all("tr")
+                for row in rows:
+                    try:
+                        recipe = parse_crafting_recipe(row)
+                        if recipe:
+                            crafting_recipes.append(recipe)
+                    except IndexError:
+                        print(f'Failed to parse crafting recipe for {item["name"]}')
+
+    if crafting_recipes:
+        item["crafting"] = crafting_recipes
+
+
 def parse_item(html):
     item = {}
     soup = BeautifulSoup(html.content, "lxml")
@@ -197,6 +301,7 @@ def parse_item(html):
 
     append_general_data(item, soup)
     append_quests(item, soup)
+    append_crafting_recipes(item, soup)
 
     return item
 
