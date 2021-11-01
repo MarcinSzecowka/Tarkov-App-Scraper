@@ -108,76 +108,101 @@ def database_declaration():
     return my_col
 
 
-def parsing_items_function(downloaded_html):
-    soup = BeautifulSoup(downloaded_html.content, "lxml")
-    try:
-        item_dict = {}
-        if soup.find("table", {"class": "va-infobox"}):
-            table = soup.find("table", {"class": "va-infobox"})
-            # general info table
-            try:
-                general_data_element = table.find_all("table", {"class": "va-infobox-group"})[1]
-                # type
-                all_general_data_tr = general_data_element.findChildren("tr")
-                for tr in all_general_data_tr:
-                    all_td = tr.find_all("td")
-                    for td in all_td:
-                        if td.getText() == "Type":
-                            final_element = tr.find("td", {"class": "va-infobox-content"})
-                            if final_element.getText() is not None:
-                                item_dict["type"] = tr.find("td", {"class": "va-infobox-content"}).getText()
-                                break
-                            else:
-                                item_dict["type"] = final_element.find("a")["href"]
-            except IndexError:
-                pass
-            # title
-            title = table.find("div", {"class": "va-infobox-title-main"})
-            if title:
-                item_dict["name"] = title.getText()
-            # image
-            picture = table.find("td", {"class": "va-infobox-mainimage-image"})
-            if picture:
-                item_dict["picture"] = picture.find("a", href=True)["href"]
-            # icon
-            icon = table.find("td", {"class": "va-infobox-icon"})
-            if icon:
-                item_dict["icon"] = icon.find("a", href=True)["href"]
+def append_type(item, general_data_table):
+    general_data_element = general_data_table.find_all("table", {"class": "va-infobox-group"})[1]
+    all_general_data_tr = general_data_element.findChildren("tr")
+    for tr in all_general_data_tr:
+        all_td = tr.find_all("td")
+        for td in all_td:
+            if td.getText() == "Type":
+                final_element = tr.find("td", {"class": "va-infobox-content"})
+                if final_element.getText() is not None:
+                    item["type"] = tr.find("td", {"class": "va-infobox-content"}).getText()
+                    break
+                else:
+                    item["type"] = final_element.find("a")["href"]
 
-            # quests
-            all_h2_elements = soup.find_all("h2")
-            for h2 in all_h2_elements:
-                children = h2.find_all("span")
-                for child in children:
-                    if child.getText() == "Quests":
-                        item_dict["quests"] = []
-                        quest_dict = {}
-                        quests_element = h2.find_next_sibling()
-                        quests = quests_element.find_all("li")
-                        for quest in quests:
-                            quest_dict["trader"] = "Prapor"
-                            all_quest_hrefs = quest.find_all("a", href=True)
-                            if all_quest_hrefs[0]["href"] == "/wiki/Found_in_raid":
-                                quest_dict["name"] = all_quest_hrefs[1].getText()
-                                quest_dict["foundInRaidRequired"] = True
-                            else:
-                                quest_dict["name"] = all_quest_hrefs[0].getText()
-                                quest_dict["foundInRaidRequired"] = False
-                            try:
-                                # quest_dict["itemCount"] = int(quest.getText().split(" ", 0)[0])
-                                quest_dict["itemCount"] = int(quest.getText().split(" ", 1)[0])
-                            except ValueError:
-                                pass
-                            item_dict["quests"].append(quest_dict)
-                        else:
-                            break
-        if item_dict:
-            return item_dict
-        else:
-            return None
-    except AttributeError:
-        item_dict = soup.find("h1", {"class": "page-header__title"}).getText()
-        return item_dict
+
+def append_name(item, table):
+    title = table.find("div", {"class": "va-infobox-title-main"})
+    if title:
+        item["name"] = title.getText()
+
+
+def append_picture(item, table):
+    picture = table.find("td", {"class": "va-infobox-mainimage-image"})
+    if picture:
+        item["picture"] = picture.find("a", href=True)["href"]
+
+
+def append_icon(item, table):
+    icon = table.find("td", {"class": "va-infobox-icon"})
+    if icon:
+        item["icon"] = icon.find("a", href=True)["href"]
+
+
+def append_general_data(item, soup):
+    table = find_general_data_table(soup)
+    if not table:
+        return
+    try:
+        append_type(item, table)
+        append_name(item, table)
+        append_picture(item, table)
+        append_icon(item, table)
+    except IndexError:
+        pass
+
+
+def find_general_data_table(soup):
+    return soup.find("table", {"class": "va-infobox"})
+
+
+def append_quests(item, soup):
+    all_h2_elements = soup.find_all("h2")
+    for h2 in all_h2_elements:
+        children = h2.find_all("span")
+        for child in children:
+            if child.getText() == "Quests":
+                item["quests"] = []
+                quests_element = h2.find_next_sibling()
+                quests = quests_element.find_all("li")
+                for quest in quests:
+                    quest_dict = {}
+                    quest_dict["trader"] = "Prapor"
+                    all_quest_hrefs = quest.find_all("a", href=True)
+                    if all_quest_hrefs[0]["href"] == "/wiki/Found_in_raid":
+                        quest_dict["name"] = all_quest_hrefs[1].getText()
+                        quest_dict["foundInRaidRequired"] = True
+                    else:
+                        quest_dict["name"] = all_quest_hrefs[0].getText()
+                        quest_dict["foundInRaidRequired"] = False
+                    try:
+                        # quest_dict["itemCount"] = int(quest.getText().split(" ", 0)[0])
+                        quest_dict["itemCount"] = int(quest.getText().split(" ", 1)[0])
+                    except ValueError:
+                        pass
+                    item["quests"].append(quest_dict)
+                else:
+                    break
+
+
+def parse_item(html):
+    item = {}
+    soup = BeautifulSoup(html.content, "lxml")
+
+    if not find_general_data_table(soup):
+        item["name"] = get_page_title(soup)
+        return item
+
+    append_general_data(item, soup)
+    append_quests(item, soup)
+
+    return item
+
+
+def get_page_title(soup):
+    return soup.find("h1", {"class": "page-header__title"}).getText()
 
 
 def get_all_items_responses(links_set):
@@ -186,7 +211,7 @@ def get_all_items_responses(links_set):
     with ThreadPoolExecutor(max_workers=2 * os.cpu_count() + 1) as pool:
         res = pool.map(requests.get, links_set)
     for result in res:
-        item = parsing_items_function(result)
+        item = parse_item(result)
         if item:
             if isinstance(item, dict):
                 item_dicts.append(item)
