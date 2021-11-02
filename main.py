@@ -62,7 +62,8 @@ def get_all_items_links():
     for ele in parse_3_candidates:
         all_items_links.append((WIKI_LINK + ele, parse_3))
 
-    return [(WIKI_LINK + "/wiki/Loot", parse_1)]
+    # return [(WIKI_LINK + "/wiki/Loot", parse_1)]
+    return all_items_links
 
 
 def get_rogue_links():
@@ -102,12 +103,13 @@ def database_declaration():
 
     # delete collection if it already exists
     if "Items" in my_db.list_collection_names():
-        my_col = my_db["Items"]
-        my_col.drop()
+        items_collection = my_db["Items"]
+        items_collection.drop()
 
     # creating collection
-    my_col = my_db["Items"]
-    return my_col
+    items_collection = my_db["Items"]
+    mapping_collection = my_db["mapping"]
+    return items_collection, mapping_collection
 
 
 def append_type(item, general_data_table):
@@ -223,12 +225,19 @@ def parse_component_image(table_header, link):
     return None
 
 
-def parse_item_component(table_header, link, full_text):
+def fetch_item_id_from_database(item_component_name):
+    mapping = mapping_collection.find_one({"name": item_component_name})
+    if mapping:
+        return mapping["id"]
+    return "undefined"
+
+
+def parse_item_component(link, full_text):
     item_component = {}
     item_component_name = link.getText()
     item_component["name"] = item_component_name
     item_component["count"] = parse_component_count(item_component_name, full_text)
-    item_component["image"] = parse_component_image(table_header, link)
+    item_component["id"] = fetch_item_id_from_database(item_component_name)
     return item_component
 
 
@@ -237,7 +246,7 @@ def parse_item_components(table_header):
     full_text = table_header.getText()
     links = find_all_links_without_children(table_header)
     for link in links:
-        component = parse_item_component(table_header, link, full_text)
+        component = parse_item_component(link, full_text)
         components.append(component)
     return components
 
@@ -294,6 +303,12 @@ def append_crafting_recipes(item, soup):
         item["crafting"] = crafting_recipes
 
 
+def append_id(item):
+    mapping = mapping_collection.find_one({"name": item["name"]})
+    if mapping:
+        item["id"] = mapping["id"]
+
+
 def parse_item(html):
     item = {}
     soup = BeautifulSoup(html.content, "lxml")
@@ -303,6 +318,7 @@ def parse_item(html):
         return item
 
     append_general_data(item, soup)
+    append_id(item)
     append_quests(item, soup)
     append_crafting_recipes(item, soup)
 
@@ -329,6 +345,9 @@ def get_all_items_responses(links_set):
 
 
 if __name__ == '__main__':
+    # creating database
+    items_collection, mapping_collection = database_declaration()
+
     # getting all links
     elements_to_parse = get_all_items_links()
     parsing_results = get_all_remaining_links()
@@ -352,8 +371,5 @@ if __name__ == '__main__':
     print(f"Item count: {len(items_dicts_list)}")
     print(f"Fail count: {len(fails_list)}")
 
-    # creating database
-    database = database_declaration()
-
     # inserting all scraped items into the "Items" collection
-    print(database.insert_many(items_dicts_list).inserted_ids)
+    print(items_collection.insert_many(items_dicts_list).inserted_ids)
