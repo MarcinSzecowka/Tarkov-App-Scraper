@@ -60,16 +60,16 @@ def append_type(item, general_data_table):
             if td.getText() == "Type":
                 final_element = tr.find("td", {"class": "va-infobox-content"})
                 if final_element.getText() is not None:
-                    item["type"] = tr.find("td", {"class": "va-infobox-content"}).getText()
+                    item["type"] = tr.find("td", {"class": "va-infobox-content"}).getText().strip()
                     break
                 else:
-                    item["type"] = final_element.find("a")["href"]
+                    item["type"] = final_element.find("a")["href"].strip()
 
 
 def append_name(item, table):
     title = table.find("div", {"class": "va-infobox-title-main"})
     if title:
-        item["name"] = title.getText()
+        item["name"] = title.getText().strip()
 
 
 def append_picture(item, table):

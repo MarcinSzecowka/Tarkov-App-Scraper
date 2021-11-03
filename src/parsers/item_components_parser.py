@@ -10,7 +10,7 @@ def parse_item_components(table_header, mapping_collection):
 
 def parse_item_component(link, full_text, mapping_collection):
     item_component = {}
-    item_component_name = link.getText()
+    item_component_name = link.getText().strip()
     item_component["name"] = item_component_name
     item_component["count"] = parse_component_count(item_component_name, full_text)
     item_component["id"] = fetch_item_id_from_database(item_component_name, mapping_collection)

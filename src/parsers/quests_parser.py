@@ -12,10 +12,10 @@ def append_quests(item, soup):
                     quest_dict["trader"] = "Prapor"
                     all_quest_hrefs = quest.find_all("a", href=True)
                     if all_quest_hrefs[0]["href"] == "/wiki/Found_in_raid":
-                        quest_dict["name"] = all_quest_hrefs[1].getText()
+                        quest_dict["name"] = all_quest_hrefs[1].getText().strip()
                         quest_dict["foundInRaidRequired"] = True
                     else:
-                        quest_dict["name"] = all_quest_hrefs[0].getText()
+                        quest_dict["name"] = all_quest_hrefs[0].getText().strip()
                         quest_dict["foundInRaidRequired"] = False
                     try:
                         # quest_dict["itemCount"] = int(quest.getText().split(" ", 0)[0])
