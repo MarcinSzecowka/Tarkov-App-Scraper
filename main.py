@@ -109,7 +109,8 @@ def database_declaration():
     # creating collection
     items_collection = my_db["Items"]
     mapping_collection = my_db["mapping"]
-    return items_collection, mapping_collection
+    downloads_collection = my_db["downloads"]
+    return items_collection, mapping_collection, downloads_collection
 
 
 def append_type(item, general_data_table):
@@ -304,9 +305,13 @@ def append_crafting_recipes(item, soup):
 
 
 def append_id(item):
-    mapping = mapping_collection.find_one({"name": item["name"]})
-    if mapping:
-        item["id"] = mapping["id"]
+    item_name = item.get("name")
+    if item_name:
+        mapping = mapping_collection.find_one({"name": item_name})
+        if mapping:
+            item["id"] = mapping["id"]
+    else:
+        print(f'Item {item} has no name, aborting append_id')
 
 
 def parse_item(html):
@@ -346,7 +351,7 @@ def get_all_items_responses(links_set):
 
 if __name__ == '__main__':
     # creating database
-    items_collection, mapping_collection = database_declaration()
+    items_collection, mapping_collection, downloads_collection = database_declaration()
 
     # getting all links
     elements_to_parse = get_all_items_links()
