@@ -3,9 +3,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-from src.database import create_collections
+from src.database import get_collections
 from src.parsers.items_parser import parse_item
-from src.threading_utils import max_workers
+from src.utils import max_workers
 
 
 def save_download(url, downloads_collection):
@@ -30,7 +30,7 @@ def parse_and_save_items(successful_requests, items_collection, downloads_collec
 
 
 def fetch_and_save_items(articles, database):
-    items_collection, mapping_collection, downloads_collection = create_collections(database)
+    items_collection, mapping_collection, downloads_collection = get_collections(database)
     print(f'Starting data fetching process. Items to fetch: {len(articles)}')
 
     filtered = filter_already_downloaded_items(articles, downloads_collection)

@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-from src.threading_utils import max_workers
+from src.utils import max_workers
 
 
 def fetch_articles_from_given_category(category_and_parser):

@@ -9,7 +9,7 @@ def connect_to_mongo():
     return database
 
 
-def create_collections(database):
+def get_collections(database):
     items_collection = database["Items"]
     mapping_collection = database["mapping"]
     downloads_collection = database["downloads"]
