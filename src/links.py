@@ -5,9 +5,9 @@ from scrapers.articles_scraper import fetch_remaining_articles
 WIKI_LINK = "https://escapefromtarkov.fandom.com"
 ROGUE_ARTICLES = ["/wiki/FN_GL40", "/wiki/6Kh5_Bayonet", "/wiki/Antique_axe", "/wiki/Bars_A-2607_-_95x18_knife",
                   "/wiki/Bars_A-2607_Damascus_knife", "/wiki/Camper_axe", "/wiki/Crash_Axe", "/wiki/Cultist_knife",
-                  "/wiki/ER_Fulcrum_Bayonet", "/wiki/Freeman_crowbar", "/wiki/Kiba_Arms_Tactical_Tomahawk",
+                  "/wiki/ER_FULCRUM_BAYONET", "/wiki/Freeman_crowbar", "/wiki/Kiba_Arms_Tactical_Tomahawk",
                   "/wiki/Miller_Bros._Blades_M-2_Tactical_Sword", "/wiki/MPL-50_entrenching_tool",
-                  "/wiki/Red_Rebel_Ice_pick", "/wiki/SP-8_Survival_Machete", "/wiki/UVSR_Taiga-1"]
+                  "/wiki/Red_Rebel_ice_pick", "/wiki/SP-8_Survival_Machete", "/wiki/UVSR_Taiga-1_survival_machete"]
 
 
 def fetch_all_links():
@@ -45,7 +45,7 @@ def get_categories_and_parsers():
     for weapon_link in weapon_links:
         categories_and_parsers.append((WIKI_LINK + weapon_link, weapon_category_parser))
 
-    # return [(WIKI_LINK + "/wiki/Loot", basic_category_parser)]
+    # return [(WIKI_LINK + "/wiki/Medical", basic_category_parser)]
     return categories_and_parsers
 
 

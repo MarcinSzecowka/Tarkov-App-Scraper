@@ -12,7 +12,8 @@ def save_download(url, downloads_collection):
     downloads_collection.insert_one({"url": url, "last_download_date": datetime.datetime.now()})
 
 
-def save_item(item, items_collection):
+def save_item(item, url, items_collection):
+    item["wiki_link"] = url
     items_collection.insert_one(item)
 
 
@@ -23,7 +24,7 @@ def parse_and_save_items(successful_requests, items_collection, downloads_collec
         item = parse_item(article, mapping_collection)
         if isinstance(item, dict):
             save_download(url, downloads_collection)
-            save_item(item, items_collection)
+            save_item(item, url, items_collection)
         else:
             unparseable_items.append(item)
     return unparseable_items

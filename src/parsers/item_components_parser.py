@@ -27,6 +27,8 @@ def parse_component_count(item_component_name, full_text):
     for word in split:
         if item_component_name in word:
             count_text = word.strip().removesuffix(item_component_name)
+            if count_text == '':
+                return str(1)
             return count_text.removeprefix("x").strip()
     return None
 

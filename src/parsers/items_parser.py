@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 
+from src.parsers.barter_trades_parser import append_barter_trades
 from src.parsers.crafting_recipes_parser import append_crafting_recipes
 from src.parsers.quests_parser import append_quests
 
@@ -16,6 +17,7 @@ def parse_item(html, mapping_collection):
     append_id(item, mapping_collection)
     append_quests(item, soup)
     append_crafting_recipes(item, soup, mapping_collection)
+    append_barter_trades(item, soup, mapping_collection)
 
     return item
 
@@ -37,6 +39,7 @@ def append_general_data(item, soup):
         append_name(item, table)
         append_picture(item, table)
         append_icon(item, table)
+        append_sold_by(item, table)
     except IndexError:
         pass
 
@@ -82,4 +85,21 @@ def append_icon(item, table):
     icon = table.find("td", {"class": "va-infobox-icon"})
     if icon:
         item["icon"] = icon.find("a", href=True)["href"]
+
+
+def append_sold_by(item, table):
+    sold_by = []
+    table_data_cells = table.find_all("td", {"class": "va-infobox-label"})
+    for td in table_data_cells:
+        if "Sold by".lower() in td.getText().lower():
+            trader_tds = td.find_next_siblings("td", {"class": "va-infobox-content"})
+            for trader_td in trader_tds:
+                text = trader_td.getText().strip()
+                split = text.split(" ")
+                sold_by.append({
+                    "trader": split[0],
+                    "level": split[1].removeprefix("LL").strip()
+                })
+    if sold_by:
+        item["soldBy"] = sold_by
 
