@@ -1,8 +1,9 @@
 from parsers.category_parsers import weapon_category_parser, basic_category_parser, weapon_mod_category_parser
 from scrapers.articles_scraper import fetch_remaining_articles
+from src.article_utils import remove_none_types, append_protocol_and_domain, WIKI_LINK
 
 # these didn't work while scraping so they had to be added manually
-WIKI_LINK = "https://escapefromtarkov.fandom.com"
+
 ROGUE_ARTICLES = ["/wiki/FN_GL40", "/wiki/6Kh5_Bayonet", "/wiki/Antique_axe", "/wiki/Bars_A-2607_-_95x18_knife",
                   "/wiki/Bars_A-2607_Damascus_knife", "/wiki/Camper_axe", "/wiki/Crash_Axe", "/wiki/Cultist_knife",
                   "/wiki/ER_FULCRUM_BAYONET", "/wiki/Freeman_crowbar", "/wiki/Kiba_Arms_Tactical_Tomahawk",
@@ -10,7 +11,7 @@ ROGUE_ARTICLES = ["/wiki/FN_GL40", "/wiki/6Kh5_Bayonet", "/wiki/Antique_axe", "/
                   "/wiki/Red_Rebel_ice_pick", "/wiki/SP-8_Survival_Machete", "/wiki/UVSR_Taiga-1_survival_machete"]
 
 
-def fetch_all_links():
+def fetch_all_items_links():
     categories_and_parsers = get_categories_and_parsers()
     articles = fetch_remaining_articles(categories_and_parsers)
     articles.extend(ROGUE_ARTICLES)
@@ -47,11 +48,3 @@ def get_categories_and_parsers():
 
     # return [(WIKI_LINK + "/wiki/Medical", basic_category_parser)]
     return categories_and_parsers
-
-
-def remove_none_types(articles):
-    return [article for article in articles if article is not None]
-
-
-def append_protocol_and_domain(articles):
-    return [WIKI_LINK + article for article in articles if article]
