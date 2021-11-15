@@ -1,4 +1,4 @@
-from parsers.category_parsers import weapon_category_parser, basic_category_parser, weapon_mod_category_parser
+from src.parsers.item.category_parsers import weapon_category_parser, basic_category_parser, weapon_mod_category_parser
 from scrapers.articles_scraper import fetch_remaining_articles
 from src.article_utils import remove_none_types, append_protocol_and_domain, WIKI_LINK
 

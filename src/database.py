@@ -13,4 +13,5 @@ def get_collections(database):
     items_collection = database["Items"]
     mapping_collection = database["mapping"]
     downloads_collection = database["downloads"]
-    return items_collection, mapping_collection, downloads_collection
+    quests_collection = database["quests"]
+    return items_collection, mapping_collection, downloads_collection, quests_collection

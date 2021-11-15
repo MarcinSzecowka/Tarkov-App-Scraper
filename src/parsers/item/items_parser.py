@@ -1,8 +1,9 @@
 from bs4 import BeautifulSoup
 
-from src.parsers.barter_trades_parser import append_barter_trades
-from src.parsers.crafting_recipes_parser import append_crafting_recipes
-from src.parsers.quests_parser import append_quests
+from src.parsers.item.barter_trades_parser import append_barter_trades
+from src.parsers.item.crafting_recipes_parser import append_crafting_recipes
+from src.parsers.item.item_quests_parser import append_quests
+from src.parsers.parser_utils import find_general_data_table, get_page_title
 
 
 def parse_item(html, mapping_collection):
@@ -20,14 +21,6 @@ def parse_item(html, mapping_collection):
     append_barter_trades(item, soup, mapping_collection)
 
     return item
-
-
-def find_general_data_table(soup):
-    return soup.find("table", {"class": "va-infobox"})
-
-
-def get_page_title(soup):
-    return soup.find("h1", {"class": "page-header__title"}).getText()
 
 
 def append_general_data(item, soup):

@@ -1,6 +1,6 @@
 import uuid
 
-from src.parsers.item_components_parser import parse_item_components
+from src.parsers.item.item_components_parser import parse_item_components
 
 
 def append_barter_trades(item, soup, mapping_collection):

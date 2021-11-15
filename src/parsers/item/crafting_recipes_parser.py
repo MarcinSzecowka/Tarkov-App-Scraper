@@ -1,7 +1,7 @@
 import uuid
 
-from src.parsers.hideout_parser import parse_hideout_module
-from src.parsers.item_components_parser import parse_item_components
+from src.parsers.item.hideout_parser import parse_hideout_module
+from src.parsers.item.item_components_parser import parse_item_components
 
 
 def append_crafting_recipes(item, soup, mapping_collection):

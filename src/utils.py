@@ -43,3 +43,11 @@ def remove_duplicates(database):
             },
             "id": duplicated_id
         })
+
+
+def with_class(class_name):
+    return {"class": class_name}
+
+
+def with_id(id_to_find):
+    return {"id": id_to_find}

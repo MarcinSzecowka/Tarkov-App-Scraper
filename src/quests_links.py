@@ -2,7 +2,7 @@ import requests
 
 from src.article_utils import remove_none_types, append_protocol_and_domain
 from src.items_links import WIKI_LINK
-from src.parsers.category_parsers import quests_list_parser
+from src.parsers.item.category_parsers import quests_list_parser
 
 QUESTS = '/wiki/Quests'
 

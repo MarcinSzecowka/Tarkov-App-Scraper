@@ -1,15 +1,9 @@
-import datetime
 from concurrent.futures import ThreadPoolExecutor
 
-import requests
-
 from src.database import get_collections
-from src.parsers.items_parser import parse_item
+from src.parsers.item.items_parser import parse_item
+from src.scrapers.scraping_utils import filter_already_downloaded_items, try_fetch, group_results, save_download
 from src.utils import max_workers
-
-
-def save_download(url, downloads_collection):
-    downloads_collection.insert_one({"url": url, "last_download_date": datetime.datetime.now()})
 
 
 def save_item(item, url, items_collection):
@@ -23,7 +17,7 @@ def parse_and_save_items(successful_requests, items_collection, downloads_collec
         article, url = successful_request
         item = parse_item(article, mapping_collection)
         if isinstance(item, dict):
-            save_download(url, downloads_collection)
+            save_download(url, "item", downloads_collection)
             save_item(item, url, items_collection)
         else:
             unparseable_items.append(item)
@@ -32,10 +26,10 @@ def parse_and_save_items(successful_requests, items_collection, downloads_collec
 
 def fetch_and_save_items(articles, database):
     items_collection, mapping_collection, downloads_collection = get_collections(database)
-    print(f'Starting data fetching process. Items to fetch: {len(articles)}')
+    print(f'Fetching items. Items to fetch: {len(articles)}')
 
     filtered = filter_already_downloaded_items(articles, downloads_collection)
-    print(f'{len(articles) - len(filtered)} items have already been downloaded, skipping. New items to download: {len(filtered)}')
+    print(f'{len(articles) - len(filtered)} quests have already been downloaded, skipping. New quests to download: {len(filtered)}')
 
     with ThreadPoolExecutor(max_workers=max_workers()) as pool:
         fetch_results = pool.map(try_fetch, filtered)
@@ -46,31 +40,3 @@ def fetch_and_save_items(articles, database):
     failures = failed_requests + unparseable_items
     print(f'Finished data fetching process. Failures: {len(failures)}')
     print(failures)
-
-
-def filter_already_downloaded_items(urls, downloads_collection):
-    return [url for url in urls if not is_already_downloaded(url, downloads_collection)]
-
-
-def is_already_downloaded(url, downloads_collection):
-    return downloads_collection.find_one({"url": url}) is not None
-
-
-def try_fetch(url):
-    try:
-        return requests.get(url, timeout=10), url
-    except Exception as e:
-        return e, url
-
-
-def group_results(fetch_results):
-    failed = []
-    successful = []
-
-    for result, url in fetch_results:
-        if isinstance(result, Exception) or not result.ok:
-            failed.append((result, url))
-        else:
-            successful.append((result, url))
-
-    return failed, successful
