@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 
 from src.parsers.general_data_table_parser import get_general_data, get_related_quests
+from src.parsers.quests.quest_reward_parser import is_experience_reward, parse_experience_reward, is_reputation_reward, \
+    parse_reputation_reward, is_money_reward, parse_money_reward, is_item_reward, parse_item_reward, parse_basic_reward
 from src.utils import with_id
 
 QUEST_DATA_LABEL = "Quest data"
@@ -15,6 +17,7 @@ def parse_quest(article):
     append_general_data(quest, soup)
     append_requirements(quest, soup)
     append_objectives(quest, soup)
+    append_rewards(quest, soup)
     return quest
 
 
@@ -65,3 +68,28 @@ def append_objectives(quest, soup):
                 }
                 objectives.append(objective_dict)
     quest["objectives"] = objectives
+
+
+def append_rewards(quest, soup):
+    rewards = []
+    rewards_span = soup.find("span", with_id("Rewards"))
+    if rewards_span:
+        ul = rewards_span.find_parent().find_next_sibling("ul")
+        for reward_list_item in ul.find_all("li", recursive=False):
+            rewards.append(parse_reward(reward_list_item))
+    quest["rewards"] = rewards
+
+
+def parse_reward(reward_list_item):
+    if is_experience_reward(reward_list_item):
+        reward = parse_experience_reward(reward_list_item)
+    elif is_reputation_reward(reward_list_item):
+        reward = parse_reputation_reward(reward_list_item)
+    elif is_money_reward(reward_list_item):
+        reward = parse_money_reward(reward_list_item)
+    elif is_item_reward(reward_list_item):
+        reward = parse_item_reward(reward_list_item)
+    else:
+        reward = parse_basic_reward(reward_list_item)
+
+    return reward

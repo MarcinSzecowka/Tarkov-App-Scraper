@@ -10,7 +10,7 @@ def fetch_and_save_quests(articles, database):
     _, _, downloads_collection, quests_collection = get_collections(database)
     print(f'Fetching quests. Quests to fetch: {len(articles)}')
 
-    filtered = filter_already_downloaded_items(articles, downloads_collection)[:5]
+    filtered = filter_already_downloaded_items(articles, downloads_collection)
     print(
         f'{len(articles) - len(filtered)} items have already been downloaded, skipping. New items to download: {len(filtered)}')
 
