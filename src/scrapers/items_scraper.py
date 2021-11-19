@@ -8,6 +8,7 @@ from src.utils import max_workers
 
 def save_item(item, url, items_collection):
     item["wiki_link"] = url
+    item["type"] = "item"
     items_collection.insert_one(item)
 
 

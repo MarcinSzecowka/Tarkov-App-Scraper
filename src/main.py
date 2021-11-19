@@ -9,7 +9,7 @@ from src.scrapers.quests_scraper import fetch_and_save_quests
 
 def main():
     database = connect_to_mongo()
-    # fetch_items(database)
+    fetch_items(database)
     fetch_quests(database)
 
 

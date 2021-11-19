@@ -56,10 +56,10 @@ def append_type(item, general_data_table):
             if td.getText() == "Type":
                 final_element = tr.find("td", {"class": "va-infobox-content"})
                 if final_element.getText() is not None:
-                    item["type"] = tr.find("td", {"class": "va-infobox-content"}).getText().strip()
+                    item["item_type"] = tr.find("td", {"class": "va-infobox-content"}).getText().strip()
                     break
                 else:
-                    item["type"] = final_element.find("a")["href"].strip()
+                    item["item_type"] = final_element.find("a")["href"].strip()
 
 
 def append_name(item, table):

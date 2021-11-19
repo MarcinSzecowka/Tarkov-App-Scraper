@@ -27,6 +27,7 @@ def fetch_and_save_quests(articles, database):
 
 def save_quest(quest, url, quests_collection):
     quest["wiki_link"] = url
+    quest["type"] = "quest"
     quests_collection.insert_one(quest)
 
 
